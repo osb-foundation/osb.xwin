@@ -21,7 +21,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="../Osb.Toolkit/*.cs" />
+    <Compile Include="toolkit/*.cs" />
   </ItemGroup>
 
   <Target Name="CustomizeReferences" BeforeTargets="BeforeCompile" AfterTargets="FindReferenceAssembliesForReferences">
