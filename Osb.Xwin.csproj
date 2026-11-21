@@ -17,12 +17,27 @@
     <RuntimeMetadataVersion>v4.0.30319</RuntimeMetadataVersion>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <!-- Sources are listed explicitly below (root *.cs + toolkit/*.cs +
+         osb.core): the SDK's default glob would include them a second time.
+         The stale local MiniCoreLib.cs copy is excluded: osb.core is the
+         single canonical source. -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <DefineConstants>$(DefineConstants);TARGET_64BIT</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="*.cs" Exclude="MiniCoreLib.cs" />
     <Compile Include="toolkit/*.cs" />
+    <!-- mini-CoreLib: the whole osb.core/src directory, not just
+         MiniCoreLib.cs (osb.core split the primitives into their own files). -->
+    <Compile Include="../osb.core/src/*.cs" Link="osb.core/%(Filename)%(Extension)" />
   </ItemGroup>
+
+  <!-- Fail with a clear message when the sibling repo is missing. -->
+  <Target Name="CheckSiblings" BeforeTargets="CoreCompile">
+    <Error Condition="!Exists('$(MSBuildThisFileDirectory)../osb.core/src/MiniCoreLib.cs')"
+           Text="osb.core sibling repo not found (expected ../osb.core/src/MiniCoreLib.cs). Clone the OSB repos side by side; see README.md." />
+  </Target>
 
   <Target Name="CustomizeReferences" BeforeTargets="BeforeCompile" AfterTargets="FindReferenceAssembliesForReferences">
     <ItemGroup>

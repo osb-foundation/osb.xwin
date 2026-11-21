@@ -20,9 +20,17 @@ if [[ -z "${ILC:-}" || ! -x "$ILC" ]]; then
     exit 1
 fi
 
-for tool in clang ld.lld objcopy nm python3; do
+# Assembler for the .S files (GNU syntax; clang preferred, gcc works too).
+if [[ -z "${CC:-}" ]]; then
+    if command -v clang >/dev/null 2>&1; then CC=clang
+    elif command -v gcc >/dev/null 2>&1; then CC=gcc
+    else echo "ERROR: neither clang nor gcc found in PATH." >&2; exit 1; fi
+fi
+
+for tool in ld.lld objcopy nm python3; do
     command -v "$tool" >/dev/null || { echo "ERROR: $tool not found." >&2; exit 1; }
 done
+command -v "$CC" >/dev/null || { echo "ERROR: $CC not found." >&2; exit 1; }
 
 echo "[1/5] Compiling C# (managed, mini-CoreLib) ..."
 dotnet build -c Release "$ROOT/Osb.Xwin.csproj" -v q -nologo
@@ -37,7 +45,7 @@ echo "[2/5] NativeAOT (ilc) ..."
     -O -g --directpinvoke:osbsys
 
 echo "[3/5] Assembling ring-3 entry/syscall shim ..."
-clang -c -nostdlib -ffreestanding -o "$OBJ/xwin.o" "$ROOT/xwin.S"
+"$CC" -c -nostdlib -ffreestanding -o "$OBJ/xwin.o" "$ROOT/xwin.S"
 
 echo "[4/5] Linking user image at 0x2000000 ..."
 ld.lld -T "$ROOT/user.ld" -o "$OBJ/xwin.elf" \
